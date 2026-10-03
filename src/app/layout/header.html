@@ -1,0 +1,41 @@
+<header class="site-header" [class.scrolled]="scrolled()" [class.menu-open]="open()">
+  <div class="header-inner">
+    <a routerLink="/" class="logo" aria-label="Dugar Capital Advisors - home" (click)="close()">
+      <img src="images/logo/logo-header.png" alt="Dugar Capital Advisors" width="175" height="58" />
+    </a>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-controls="primary-nav"
+      [attr.aria-expanded]="open()"
+      [attr.aria-label]="open() ? 'Close menu' : 'Open menu'"
+      (click)="toggle()"
+    >
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav id="primary-nav" class="nav" aria-label="Primary" [class.open]="open()">
+      <ul class="nav-list">
+        @for (link of links; track link.path) {
+          <li>
+            <a
+              class="nav-link"
+              [routerLink]="link.path"
+              routerLinkActive="active"
+              ariaCurrentWhenActive="page"
+              [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+              (click)="close()"
+            >{{ link.label }}</a>
+          </li>
+        }
+      </ul>
+      <a routerLink="/contact" routerLinkActive="active" class="nav-cta" (click)="close()">
+        <span>Contact</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </a>
+    </nav>
+  </div>
+</header>
