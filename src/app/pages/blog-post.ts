@@ -1,39 +1,50 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { map } from 'rxjs';
-import { BLOGS } from '../site-data';
+import { BlogService } from '../blog.service';
+
+type Block = { type: 'heading' | 'paragraph' | 'list'; text: string; items: string[] };
+
+/**
+ * Article text is plain text: blank line = new paragraph, "## " = heading, lines starting with "- " = bullet list.
+ * Rendered with normal Angular bindings (never innerHTML), so it can't inject markup.
+ */
+function toBlocks(content: string): Block[] {
+  return content
+    .split(/\n\s*\n/)
+    .map(chunk => chunk.trim())
+    .filter(Boolean)
+    .map((chunk): Block => {
+      const lines = chunk.split('\n').map(l => l.trim());
+      if (chunk.startsWith('## ')) return { type: 'heading', text: chunk.slice(3).trim(), items: [] };
+      if (lines.every(l => l.startsWith('- '))) return { type: 'list', text: '', items: lines.map(l => l.slice(2).trim()) };
+      return { type: 'paragraph', text: chunk, items: [] };
+    });
+}
 
 @Component({
   selector: 'app-blog-post',
   imports: [RouterLink],
-  template: `
-    @if (post(); as p) {
-      <section class="page-title">
-        <div class="container">
-          <h1>{{ p.title }}</h1>
-          <time>{{ p.date }}</time>
-        </div>
-      </section>
-      <article class="section">
-        <div class="container narrow">
-          <img [src]="p.image" [alt]="p.title" class="rounded" />
-          <p class="lead">{{ p.excerpt }}</p>
-          <!-- TODO: paste full article body here -->
-          <p><a routerLink="/blogs" class="btn btn-outline">&larr; Back to Blogs</a></p>
-        </div>
-      </article>
-    } @else {
-      <section class="section">
-        <div class="container center">
-          <h1>Page not found</h1>
-          <p><a routerLink="/" class="btn">Go Home</a></p>
-        </div>
-      </section>
-    }
-  `,
+  templateUrl: './blog-post.html',
+  styleUrl: './blog-post.scss',
 })
 export class BlogPostPage {
+  private readonly service = inject(BlogService);
+  private readonly title = inject(Title);
   private readonly slug = toSignal(inject(ActivatedRoute).paramMap.pipe(map(p => p.get('slug'))));
-  protected readonly post = computed(() => BLOGS.find(b => b.slug === this.slug()));
+
+  protected readonly loaded = computed(() => this.service.posts() !== null);
+  protected readonly post = computed(() => this.service.posts()?.find(b => b.slug === this.slug()));
+  protected readonly hero = computed(() => (this.post() ? `url("${this.post()!.image}")` : ''));
+  protected readonly blocks = computed(() => toBlocks(this.post()?.content ?? ''));
+
+  constructor() {
+    this.service.load(true);
+    effect(() => {
+      const p = this.post();
+      this.title.setTitle(p ? `${p.title} | Dugar Capital Advisors` : 'Page not found | Dugar Capital Advisors');
+    });
+  }
 }

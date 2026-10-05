@@ -25,6 +25,10 @@ const CONTACT_ENDPOINT = '/api/contact';
             <a href="tel:{{ company.phone }}">{{ company.phoneIntl }}</a>
           </li>
           <li>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6.600 10.800a15.100 15.100 0 0 0 6.600 6.600l2.200-2.200a1 1 0 0 1 1-.25 11.400 11.400 0 0 0 3.600.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.500a1 1 0 0 1 1 1c0 1.250.2 2.450.57 3.570a1 1 0 0 1-.25 1z"/></svg>
+            <a href="tel:{{ company.phone2 }}">{{ company.phone2Intl }}</a>
+          </li>
+          <li>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5z"/></svg>
             <a href="mailto:{{ company.email }}">{{ company.email }}</a>
           </li>

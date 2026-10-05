@@ -1,0 +1,41 @@
+@if (loaded()) {
+  @if (post(); as p) {
+    <section class="page-title post-hero" [style.--hero]="hero()">
+      <div class="container">
+        <p class="eyebrow">{{ p.date }}</p>
+        <h1>{{ p.title }}</h1>
+      </div>
+    </section>
+
+    <article class="post-section">
+      <div class="post-wrap">
+        <p class="post-lead">{{ p.excerpt }}</p>
+
+        @for (b of blocks(); track $index) {
+          @switch (b.type) {
+            @case ('heading') { <h2>{{ b.text }}</h2> }
+            @case ('list') {
+              <ul>
+                @for (item of b.items; track $index) { <li>{{ item }}</li> }
+              </ul>
+            }
+            @default { <p>{{ b.text }}</p> }
+          }
+        }
+
+        <div class="post-footer">
+          <a routerLink="/blogs" class="btn btn-outline">&larr; Back to Blogs</a>
+          <a routerLink="/contact" class="btn btn-orange btn-sm">Talk to an Advisor</a>
+        </div>
+      </div>
+    </article>
+  } @else {
+    <section class="post-missing">
+      <h1>Page not found</h1>
+      <p>This article doesn't exist or is no longer available.</p>
+      <a routerLink="/blogs" class="btn btn-orange btn-sm">Browse all blogs</a>
+    </section>
+  }
+} @else {
+  <section class="post-missing" aria-busy="true"><p>Loading&hellip;</p></section>
+}

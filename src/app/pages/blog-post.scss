@@ -1,0 +1,38 @@
+.post-hero { min-height: 460px; padding-top: 150px; }
+.post-hero h1 { max-width: 900px; margin-inline: auto; font-size: clamp(30px, 4.5vw, 46px); }
+
+.post-section { background: var(--bg-alt); padding: 70px 0 90px; }
+
+.post-wrap {
+  width: min(820px, 100% - 40px);
+  margin-inline: auto;
+  padding: 56px 64px 60px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(27, 21, 18, .07);
+
+  p, li { font-size: 17px; line-height: 1.85; color: #333; }
+  p { margin: 0 0 22px; white-space: pre-line; }
+  h2 { margin: 38px 0 14px; font-size: 28px; }
+  ul { margin: 0 0 24px; padding-left: 22px; list-style: disc; }
+  li { margin-bottom: 6px; }
+}
+
+.post-lead { font-family: var(--serif); font-size: 21px !important; font-weight: 700; color: #111 !important; padding-bottom: 24px; border-bottom: 1px solid #eee; margin-bottom: 30px !important; }
+
+.post-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  margin-top: 44px;
+  padding-top: 28px;
+  border-top: 1px solid #eee;
+}
+
+.post-missing { padding: 200px 20px 100px; text-align: center; background: var(--bg-alt); min-height: 70vh; }
+
+@media (max-width: 700px) {
+  .post-hero { min-height: 380px; padding-top: 120px; }
+  .post-section { padding: 40px 0 60px; }
+  .post-wrap { padding: 32px 22px 36px; }
+}

@@ -4,6 +4,9 @@ export const COMPANY = {
   address: '101-102, Lusa Tower, Azadpur Commercial Complex, Azadpur, New Delhi -110033',
   phone: '9412330008',
   phoneIntl: '+91 9412330008',
+  phone2: '9999154568',
+  phone2Intl: '+91 9999154568',
+  linkedin: 'https://www.linkedin.com/in/dugar-capital-advisors-privated-ltd-6051aa441',
   email: 'info@dugarcapital.com',
   year: 2026,
 };
@@ -13,6 +16,7 @@ export const NAV_LINKS = [
   { label: 'About', path: '/about' },
   { label: 'Services', path: '/services' },
   { label: 'Testimonials', path: '/testimonials' },
+  { label: 'Blogs', path: '/blogs' },
   { label: 'Contact', path: '/contact' },
 ];
 
@@ -153,6 +157,7 @@ export interface TeamMember {
   role: string;
   bio: string;
   image: string;
+  linkedin: string;
 }
 
 export const TEAM: TeamMember[] = [
@@ -160,13 +165,15 @@ export const TEAM: TeamMember[] = [
     name: 'Virendra Dugar',
     role: 'Founder',
     bio: "With 18 years of extensive experience in the capital markets, the founder of Dugar Capital has demonstrated expertise in broking, IPO consulting, and team building. A graduate of St. Xavier's College, Kolkata, he has successfully contributed to over 30 IPOs, with a specialized focus on SME IPOs. His deep understanding of the financial landscape, combined with a hands-on approach to guiding companies through complex IPO processes, has positioned him as a trusted advisor in the industry. His proven track record in delivering results and building strong teams makes him an invaluable asset to businesses seeking to navigate the capital markets with confidence and precision.",
-    image: 'images/about/team-virendra-dugar.jpg',
+    image: 'images/about/team-virendra-dugar.jpeg',
+    linkedin: 'https://www.linkedin.com/in/virendra-dugar-b983a026a',
   },
   {
     name: 'Anju Singh',
     role: 'Team Member',
     bio: "With over 15 years of rich experience in the insurance domain and corporate advisory, she brings unparalleled knowledge and strategic acumen to every client engagement. A graduate of Delhi University with a Bachelor's degree in Arts, her expertise in corporate advisory has been pivotal in driving client acquisition, expanding the firm's portfolio, and cultivating enduring business relationships. Her profound understanding of industry dynamics, coupled with her ability to craft tailored advisory solutions, has consistently empowered the company to secure high-value partnerships and deliver exceptional outcomes for clients. Her leadership and insights remain a cornerstone of the company's continued success and growth.",
-    image: 'images/about/team-anju-singh.jpg',
+    image: 'images/about/team-anju-singh.jpeg',
+    linkedin: 'https://www.linkedin.com/in/anju-singh-600b9953',
   },
 ];
 
@@ -176,6 +183,7 @@ export interface BlogPost {
   date: string;
   excerpt: string;
   image: string;
+  content?: string;
 }
 
 export const BLOGS: BlogPost[] = [

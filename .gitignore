@@ -45,3 +45,9 @@ Thumbs.db
 # Mail server credentials - never commit
 server/.env
 .env
+
+.vercel
+.env*.local
+
+# local blog data
+server/data/

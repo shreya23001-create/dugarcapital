@@ -42,7 +42,6 @@ import { BLOGS, HOME_TESTIMONIALS, SERVICES, WHY_CHOOSE } from '../site-data';
         <div class="grid grid-3">
           @for (s of services; track s.num) {
             <article class="card">
-              <span class="num">{{ s.num }}</span>
               <h3>{{ s.title }}</h3>
               <p>{{ s.summary }}</p>
             </article>

@@ -18,7 +18,6 @@ import { SERVICES, serviceSlug } from '../site-data';
         @for (s of services; track s.num; let i = $index) {
           <article class="service-row" [id]="slug(s.title)" [class.reverse]="i % 2 === 1">
             <div class="service-text">
-              <span class="service-num">{{ s.num }}</span>
               <h2>{{ s.title }}</h2>
               <p>{{ s.detail }}</p>
               <ul class="arrow-list">

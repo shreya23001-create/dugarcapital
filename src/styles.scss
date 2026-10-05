@@ -251,3 +251,10 @@ ul { padding: 0; margin: 0; list-style: none; }
   .about-card { grid-template-columns: 1fr; }
   .about-card-text { padding: 40px 24px; }
 }
+
+/* LinkedIn button on team cards */
+.linkedin-btn {
+  display: inline-flex; align-items: center; justify-content: center; margin-top: 20px;
+  width: 40px; height: 40px; background: #0a66c2; color: #fff; transition: transform .25s ease, background .25s ease;
+  &:hover { background: #004182; transform: translateY(-2px); }
+}
