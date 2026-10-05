@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
+import { Meta } from '@angular/platform-browser';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -12,6 +13,7 @@ import { Footer } from './layout/footer';
 })
 export class App {
   private readonly router = inject(Router);
+  private readonly meta = inject(Meta);
 
   // The hidden admin page has its own layout: no site header/footer
   protected readonly isAdmin = toSignal(
@@ -21,4 +23,11 @@ export class App {
     ),
     { initialValue: typeof location !== 'undefined' && location.pathname.startsWith('/admin') }
   );
+
+  constructor() {
+    effect(() => {
+      if (this.isAdmin()) this.meta.updateTag({ name: 'robots', content: 'noindex,nofollow' });
+      else this.meta.removeTag("name='robots'");
+    });
+  }
 }

@@ -42,27 +42,21 @@ const SEED = [
 
 const useBlob = env => Boolean(env.BLOB_READ_WRITE_TOKEN);
 
-async function readAll(env) {
-  let raw = null;
+// Generic JSON storage: Vercel Blob in production, a file under server/data in development
+async function readRaw(env, blobPath, localFile) {
   if (useBlob(env)) {
     const { get } = await import('@vercel/blob');
-    const res = await get(BLOB_PATH, { access: 'private', token: env.BLOB_READ_WRITE_TOKEN, useCache: false });
-    if (res?.statusCode === 200) raw = await new Response(res.stream).text();
-  } else {
-    raw = await fs.readFile(LOCAL_FILE, 'utf8').catch(() => null);
+    const res = await get(blobPath, { access: 'private', token: env.BLOB_READ_WRITE_TOKEN, useCache: false });
+    return res?.statusCode === 200 ? await new Response(res.stream).text() : null;
   }
-  if (raw === null) {
-    await writeAll(env, SEED); // first run: seed with the original three posts
-    return structuredClone(SEED);
-  }
-  return JSON.parse(raw);
+  return fs.readFile(localFile, 'utf8').catch(() => null);
 }
 
-async function writeAll(env, posts) {
-  const json = JSON.stringify(posts, null, 2);
+async function writeRaw(env, blobPath, localFile, data) {
+  const json = JSON.stringify(data, null, 2);
   if (useBlob(env)) {
     const { put } = await import('@vercel/blob');
-    await put(BLOB_PATH, json, {
+    await put(blobPath, json, {
       access: 'private',
       token: env.BLOB_READ_WRITE_TOKEN,
       contentType: 'application/json',
@@ -71,8 +65,41 @@ async function writeAll(env, posts) {
       cacheControlMaxAge: 60,
     });
   } else {
-    await fs.mkdir(path.dirname(LOCAL_FILE), { recursive: true });
-    await fs.writeFile(LOCAL_FILE, json);
+    await fs.mkdir(path.dirname(localFile), { recursive: true });
+    await fs.writeFile(localFile, json);
+  }
+}
+
+async function readAll(env) {
+  const raw = await readRaw(env, BLOB_PATH, LOCAL_FILE);
+  if (raw === null) {
+    await writeAll(env, SEED); // first run: seed with the original three posts
+    return structuredClone(SEED);
+  }
+  return JSON.parse(raw);
+}
+
+const writeAll = (env, posts) => writeRaw(env, BLOB_PATH, LOCAL_FILE, posts);
+
+/* ---------- contact enquiries ---------- */
+
+const CONTACTS_BLOB = 'contacts/messages.json';
+const CONTACTS_FILE = path.join(here, 'data', 'contacts.json');
+const MAX_ENQUIRIES = 1000;
+
+async function readEnquiries(env) {
+  const raw = await readRaw(env, CONTACTS_BLOB, CONTACTS_FILE);
+  return raw === null ? [] : JSON.parse(raw);
+}
+
+/** Keep a copy of every contact-form submission so it can be read in the admin panel. Never throws. */
+export async function saveEnquiry(env, { name, email, mobile, company, message }) {
+  try {
+    const list = await readEnquiries(env);
+    list.unshift({ id: randomBytes(6).toString('hex'), createdAt: new Date().toISOString(), name, email, mobile, company, message });
+    await writeRaw(env, CONTACTS_BLOB, CONTACTS_FILE, list.slice(0, MAX_ENQUIRIES));
+  } catch (err) {
+    console.error('Could not store enquiry:', err.message);
   }
 }
 
@@ -147,15 +174,15 @@ const parseCookies = header =>
 const cookieHeader = (value, maxAgeSeconds, env) =>
   `${COOKIE}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAgeSeconds}${env.VERCEL || env.NODE_ENV === 'production' ? '; Secure' : ''}`;
 
-// brute-force guard: 8 login attempts per IP per 15 minutes (per server instance)
-const attempts = new Map();
-function tooManyLogins(ip) {
+// brute-force guard: 8 WRONG passwords per IP per 15 minutes (per server instance).
+// Successful sign-ins are not counted, and one clears the count.
+const failedLogins = new Map();
+const recentFailures = ip => {
   const now = Date.now();
-  const recent = (attempts.get(ip) ?? []).filter(t => now - t < 15 * 60_000);
-  recent.push(now);
-  attempts.set(ip, recent);
-  return recent.length > 8;
-}
+  const recent = (failedLogins.get(ip) ?? []).filter(t => now - t < 15 * 60_000);
+  failedLogins.set(ip, recent);
+  return recent;
+};
 
 /* ---------- validation ---------- */
 
@@ -213,11 +240,15 @@ export async function handleAdmin({ body, cookieHeader: ch, ip, env }) {
   const action = body.action;
 
   if (action === 'login') {
-    if (tooManyLogins(ip)) return { status: 429, json: { ok: false, message: 'Too many attempts. Try again in 15 minutes.' } };
+    if (recentFailures(ip).length >= 8) return { status: 429, json: { ok: false, message: 'Too many wrong attempts. Please try again in 15 minutes.' } };
     // compare both fields every time so response timing doesn't reveal which was wrong
     const okUser = safeEqual(body.username ?? '', env.ADMIN_USER);
     const okPass = safeEqual(body.password ?? '', env.ADMIN_PASSWORD);
-    if (!(okUser && okPass)) return { status: 401, json: { ok: false, message: 'Incorrect username or password.' } };
+    if (!(okUser && okPass)) {
+      recentFailures(ip).push(Date.now());
+      return { status: 401, json: { ok: false, message: 'Incorrect username or password.' } };
+    }
+    failedLogins.delete(ip);
     return { status: 200, json: { ok: true }, setCookie: cookieHeader(makeToken(env.ADMIN_SECRET), SESSION_HOURS * 3600, env) };
   }
 
@@ -231,6 +262,15 @@ export async function handleAdmin({ body, cookieHeader: ch, ip, env }) {
     const all = await readAll(env);
 
     if (action === 'list') return { status: 200, json: { ok: true, posts: [...all].sort(byDateDesc) } };
+
+    if (action === 'contacts') return { status: 200, json: { ok: true, contacts: await readEnquiries(env) } };
+
+    if (action === 'removeContact') {
+      const list = await readEnquiries(env);
+      if (!list.some(c => c.id === body.id)) return { status: 404, json: { ok: false, message: 'Enquiry not found.' } };
+      await writeRaw(env, CONTACTS_BLOB, CONTACTS_FILE, list.filter(c => c.id !== body.id));
+      return { status: 200, json: { ok: true } };
+    }
 
     if (action === 'save') {
       const existing = body.originalSlug ? all.find(p => p.slug === body.originalSlug) : null;

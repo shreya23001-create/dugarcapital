@@ -1,6 +1,7 @@
 // Shared contact-form logic, used by the local Express server (server/index.mjs)
 // and the Vercel serverless function (api/contact.mjs).
 import nodemailer from 'nodemailer';
+import { saveEnquiry } from './blogs.mjs';
 
 export const REQUIRED_ENV = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'CONTACT_TO'];
 
@@ -69,6 +70,9 @@ export async function handleContact({ body, ip, env }) {
   if (Object.keys(errors).length) return { status: 400, json: { ok: false, errors } };
 
   const { name, email, mobile, company, message } = values;
+
+  // keep a copy for the admin panel (best effort: a storage problem must never block the email)
+  await saveEnquiry(env, values);
   const rows = [
     ['Name', name],
     ['Email', email],

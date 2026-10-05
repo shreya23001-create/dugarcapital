@@ -1,5 +1,6 @@
-import { afterNextRender, Component, DestroyRef, ElementRef, inject, viewChild } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, ElementRef, inject, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { BlogService } from '../blog.service';
 import { BLOGS, HOME_TESTIMONIALS, SERVICES, WHY_CHOOSE } from '../site-data';
 
 @Component({
@@ -39,6 +40,7 @@ import { BLOGS, HOME_TESTIMONIALS, SERVICES, WHY_CHOOSE } from '../site-data';
     <section class="section alt">
       <div class="container">
         <h2 class="center">Comprehensive Financial Solutions for Your Business Needs</h2>
+        <p class="section-sub">Explore Our Expert Offerings: From IPO Advisory to Strategic Business Consulting</p>
         <div class="grid grid-3">
           @for (s of services; track s.num) {
             <article class="card">
@@ -47,13 +49,15 @@ import { BLOGS, HOME_TESTIMONIALS, SERVICES, WHY_CHOOSE } from '../site-data';
             </article>
           }
         </div>
-        <p class="center"><a routerLink="/services" class="btn">View All Services</a></p>
+        <p class="center"><a routerLink="/services" class="btn btn-orange">View All Services</a></p>
       </div>
     </section>
 
     <section class="section">
       <div class="container">
-        <h2 class="center">Why Choose Dugar Capital</h2>
+        <h2 class="center">Why Choose Dugar Capital?</h2>
+        <p class="section-sub">Experience the Difference of Expert Financial Guidance</p>
+        <p class="section-lead">At Dugar Capital, we stand out by offering personalized financial strategies tailored to your unique business needs. Our experienced professionals provide expert insights and reliable guidance, ensuring your growth and success. With a client-centric approach rooted in trust and transparency, we build enduring partnerships that drive results.</p>
         <div class="grid grid-3">
           @for (w of why; track w.title) {
             <article class="card plain">
@@ -79,11 +83,19 @@ import { BLOGS, HOME_TESTIMONIALS, SERVICES, WHY_CHOOSE } from '../site-data';
       </div>
     </section>
 
+    <section class="home-cta">
+      <div class="container-wide cta-banner" style="--cta: url('images/hero/hero-fallback-consultation.jpg')">
+        <p class="eyebrow">Let’s Achieve Your Financial Goals Together!</p>
+        <h2>Book Your Free Consultation Today and Start Your Journey to Success!</h2>
+        <a routerLink="/contact" class="btn btn-orange btn-sm">Call to Action</a>
+      </div>
+    </section>
+
     <section class="section">
       <div class="container">
         <h2 class="center">Read our Latest Blogs</h2>
         <div class="grid grid-3">
-          @for (b of blogs; track b.slug) {
+          @for (b of blogs(); track b.slug) {
             <article class="card blog">
               <img [src]="b.image" [alt]="b.title" />
               <div class="card-body">
@@ -93,6 +105,7 @@ import { BLOGS, HOME_TESTIMONIALS, SERVICES, WHY_CHOOSE } from '../site-data';
             </article>
           }
         </div>
+        <p class="right"><a routerLink="/blogs" class="btn btn-orange">View All</a></p>
       </div>
     </section>
   `,
@@ -104,6 +117,7 @@ export class Home {
   private destroyed = false;
 
   constructor() {
+    this.blogService.load();
     afterNextRender(() => this.initVideo());
     inject(DestroyRef).onDestroy(() => {
       this.destroyed = true;
@@ -135,5 +149,7 @@ export class Home {
   protected readonly services = SERVICES;
   protected readonly why = WHY_CHOOSE;
   protected readonly testimonials = HOME_TESTIMONIALS;
-  protected readonly blogs = BLOGS;
+  // the three newest published posts from the admin-managed blog (falls back to the built-in posts if the API is unreachable)
+  private readonly blogService = inject(BlogService);
+  protected readonly blogs = computed(() => (this.blogService.posts() ?? BLOGS).slice(0, 3));
 }
