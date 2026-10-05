@@ -43,6 +43,7 @@ export class Admin {
   protected readonly originalSlug = signal<string | null>(null);
   protected readonly slugTouched = signal(false);
 
+  protected readonly showPassword = signal(false);
   protected readonly uploading = signal(false);
   protected readonly showLink = signal(false);
   protected readonly imageError = signal('');
