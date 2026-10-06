@@ -2,9 +2,10 @@ export const COMPANY = {
   name: 'Dugar Capital Advisors Private Limited',
   tagline: 'Expert financial guidance tailored to drive your business growth.',
   address: '101-102, Lusa Tower, Azadpur Commercial Complex, Azadpur, New Delhi -110033',
-  // only one number is shown on the site; the other one on file is 9412330008
   phone: '9999154568',
   phoneIntl: '+91 9999154568',
+  phone2: '9412330008',
+  phone2Intl: '+91 9412330008',
   linkedin: 'https://www.linkedin.com/in/dugar-capital-advisors-privated-ltd-6051aa441',
   email: 'info@dugarcapital.com',
   year: 2026,
