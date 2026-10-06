@@ -7,7 +7,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import sanitizeHtml from 'sanitize-html';
+import xss from 'xss';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const LOCAL_FILE = path.join(here, 'data', 'blogs.json');
@@ -194,37 +194,41 @@ const slugify = s =>
 
 const HTML_RE = /<\/?[a-z][\s\S]*?>/i;
 
+// allow-list of formatting kept from the editor; everything else is removed
+const richFilter = new xss.FilterXSS({
+  whiteList: { p: [], br: [], strong: [], em: [], u: [], s: [], h2: [], h3: [], ul: [], ol: [], li: [], blockquote: [], a: ['href'], hr: [] },
+  stripIgnoreTag: true,
+  stripIgnoreTagBody: ['script', 'style'],
+});
+const textFilter = new xss.FilterXSS({ whiteList: {}, stripIgnoreTag: true, stripIgnoreTagBody: ['script', 'style'] });
+
 /**
  * The summary and article are written in the rich text editor and shown to visitors as HTML,
  * so only a short allow-list of formatting is kept. Scripts, styles, event handlers, images,
  * iframes and unsafe links are removed. Older plain-text posts (no tags) are left as they are.
  */
-function cleanRich(raw) {
+export function cleanRich(raw) {
   const s = String(raw ?? '').replace(/\u0000/g, '').trim();
   if (!HTML_RE.test(s)) return s;
-  return sanitizeHtml(s, {
-    allowedTags: ['p', 'br', 'strong', 'em', 'u', 's', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a', 'hr'],
-    allowedAttributes: { a: ['href', 'target', 'rel'] },
-    allowedSchemes: ['http', 'https', 'mailto', 'tel'],
-    allowedSchemesAppliedToAttributes: ['href'],
-    disallowedTagsMode: 'discard',
-    transformTags: {
-      b: 'strong',
-      i: 'em',
-      strike: 's',
-      del: 's',
-      a: (tagName, attribs) => ({ tagName: 'a', attribs: { href: attribs.href ?? '', target: '_blank', rel: 'noopener noreferrer nofollow' } }),
-    },
-  })
+  return richFilter
+    .process(
+      s
+        .replace(/<(\/?)b(?=[\s>])/gi, '<$1strong')
+        .replace(/<(\/?)i(?=[\s>])/gi, '<$1em')
+        .replace(/<(\/?)(strike|del)(?=[\s>])/gi, '<$1s')
+    )
+    // every link opens in a new tab and is marked so it doesn't pass authority or the opener
+    .replace(/<a href="([^"]*)"[^>]*>/gi, '<a href="$1" target="_blank" rel="noopener noreferrer nofollow">')
     .replace(/^(?:<p>(?:\s|<br\s*\/?>)*<\/p>\s*)+/i, '')
     .replace(/(?:\s*<p>(?:\s|<br\s*\/?>)*<\/p>)+$/i, '')
     .trim();
 }
 
 /** length of the visible text, ignoring the formatting tags */
-function textLength(html) {
+export function textLength(html) {
   if (!HTML_RE.test(html)) return html.length;
-  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
+  return textFilter
+    .process(html)
     .replace(/&(amp|lt|gt|quot|#39);/g, 'x')
     .replace(/\s+/g, ' ')
     .trim().length;
