@@ -7,6 +7,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sanitizeHtml from 'sanitize-html';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const LOCAL_FILE = path.join(here, 'data', 'blogs.json');
@@ -189,20 +190,61 @@ const recentFailures = ip => {
 const slugify = s =>
   String(s).toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90);
 
+/* ---------- rich text (summary and article) ---------- */
+
+const HTML_RE = /<\/?[a-z][\s\S]*?>/i;
+
+/**
+ * The summary and article are written in the rich text editor and shown to visitors as HTML,
+ * so only a short allow-list of formatting is kept. Scripts, styles, event handlers, images,
+ * iframes and unsafe links are removed. Older plain-text posts (no tags) are left as they are.
+ */
+function cleanRich(raw) {
+  const s = String(raw ?? '').replace(/\u0000/g, '').trim();
+  if (!HTML_RE.test(s)) return s;
+  return sanitizeHtml(s, {
+    allowedTags: ['p', 'br', 'strong', 'em', 'u', 's', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a', 'hr'],
+    allowedAttributes: { a: ['href', 'target', 'rel'] },
+    allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+    allowedSchemesAppliedToAttributes: ['href'],
+    disallowedTagsMode: 'discard',
+    transformTags: {
+      b: 'strong',
+      i: 'em',
+      strike: 's',
+      del: 's',
+      a: (tagName, attribs) => ({ tagName: 'a', attribs: { href: attribs.href ?? '', target: '_blank', rel: 'noopener noreferrer nofollow' } }),
+    },
+  })
+    .replace(/^(?:<p>(?:\s|<br\s*\/?>)*<\/p>\s*)+/i, '')
+    .replace(/(?:\s*<p>(?:\s|<br\s*\/?>)*<\/p>)+$/i, '')
+    .trim();
+}
+
+/** length of the visible text, ignoring the formatting tags */
+function textLength(html) {
+  if (!HTML_RE.test(html)) return html.length;
+  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
+    .replace(/&(amp|lt|gt|quot|#39);/g, 'x')
+    .replace(/\s+/g, ' ')
+    .trim().length;
+}
+
 function cleanPost(input, existing, all) {
   const errors = {};
   const title = String(input.title ?? '').trim();
-  const excerpt = String(input.excerpt ?? '').trim();
-  const content = String(input.content ?? '').replace(/\u0000/g, '').trim();
+  const excerpt = cleanRich(input.excerpt);
+  const content = cleanRich(input.content);
   const status = input.status === 'published' ? 'published' : 'draft';
   const date = /^\d{4}-\d{2}-\d{2}$/.test(input.date ?? '') ? input.date : new Date().toISOString().slice(0, 10);
   const image = String(input.image ?? '').trim() || 'images/about/business-charts-review.jpg';
   let slug = slugify(input.slug || title);
 
   if (!title || title.length > 200) errors.title = 'Title is required (max 200 characters).';
-  if (!excerpt || excerpt.length > 400) errors.excerpt = 'Short summary is required (max 400 characters).';
-  if (content.length > 50_000) errors.content = 'Article is too long.';
-  if (status === 'published' && content.length < 20) errors.content = 'Write the article before publishing.';
+  if (!textLength(excerpt)) errors.excerpt = 'Short summary is required.';
+  else if (textLength(excerpt) > 400 || excerpt.length > 4000) errors.excerpt = 'Short summary is too long (max 400 characters).';
+  if (content.length > 100_000) errors.content = 'Article is too long.';
+  if (status === 'published' && textLength(content) < 20) errors.content = 'Write the article before publishing.';
   if (!/^(images\/[A-Za-z0-9_\-./]+|\/api\/blog-image\?f=[A-Za-z0-9._-]+|https:\/\/[^\s"'<>()]+)$/.test(image)) errors.image = 'Image must be an uploaded photo or an https:// link.';
   if (!slug) errors.slug = 'Could not create a URL from the title.';
   else if (RESERVED_SLUGS.includes(slug)) errors.slug = `"${slug}" is reserved. Please use a different URL.`;

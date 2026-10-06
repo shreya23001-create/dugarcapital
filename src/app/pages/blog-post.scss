@@ -9,15 +9,33 @@
   padding: 56px 64px 60px;
   background: #fff;
   box-shadow: 0 6px 24px rgba(27, 21, 18, .07);
-
-  p, li { font-size: 17px; line-height: 1.85; color: #333; }
-  p { margin: 0 0 22px; white-space: pre-line; }
-  h2 { margin: 38px 0 14px; font-size: 28px; }
-  ul { margin: 0 0 24px; padding-left: 22px; list-style: disc; }
-  li { margin-bottom: 6px; }
 }
 
-.post-lead { font-family: var(--serif); font-size: 21px !important; font-weight: 700; color: #111 !important; padding-bottom: 24px; border-bottom: 1px solid #eee; margin-bottom: 30px !important; }
+/* the summary and article are HTML from the editor, so style the elements inside them */
+.post-lead {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #111;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 30px;
+}
+.post-body, .post-lead { overflow-wrap: anywhere; }
+:host ::ng-deep .post-lead > * + *, :host ::ng-deep .post-body > * + * { margin-top: 18px; }
+:host ::ng-deep .post-lead p, :host ::ng-deep .post-body p { margin: 0; font-size: 17px; line-height: 1.85; color: #333; }
+:host ::ng-deep .post-lead p { font-size: 21px; line-height: 1.7; color: #111; }
+:host ::ng-deep .post-body h2 { margin: 38px 0 0; font-size: 28px; }
+:host ::ng-deep .post-body h3 { margin: 30px 0 0; font-size: 22px; }
+:host ::ng-deep .post-body ul, :host ::ng-deep .post-body ol, :host ::ng-deep .post-lead ul, :host ::ng-deep .post-lead ol { margin: 0; padding-left: 24px; }
+:host ::ng-deep .post-body ul, :host ::ng-deep .post-lead ul { list-style: disc; }
+:host ::ng-deep .post-body ol, :host ::ng-deep .post-lead ol { list-style: decimal; }
+:host ::ng-deep .post-body li, :host ::ng-deep .post-lead li { font-size: 17px; line-height: 1.85; color: #333; margin-bottom: 6px; font-family: Arial, Helvetica, sans-serif; font-weight: 400; }
+:host ::ng-deep .post-body li p, :host ::ng-deep .post-lead li p { display: inline; }
+:host ::ng-deep .post-body blockquote { margin: 26px 0 0; padding: 6px 0 6px 20px; border-left: 4px solid var(--primary); font-family: var(--serif); font-size: 21px; font-style: italic; color: #444; }
+:host ::ng-deep .post-body a, :host ::ng-deep .post-lead a { color: var(--primary); text-decoration: underline; }
+:host ::ng-deep .post-body hr { border: 0; border-top: 2px solid #eee; margin: 32px 0 0; }
 
 .post-footer {
   display: flex;

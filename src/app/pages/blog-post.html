@@ -9,19 +9,9 @@
 
     <article class="post-section">
       <div class="post-wrap">
-        <p class="post-lead">{{ p.excerpt }}</p>
+        <div class="post-lead" [innerHTML]="p.excerpt | richText"></div>
 
-        @for (b of blocks(); track $index) {
-          @switch (b.type) {
-            @case ('heading') { <h2>{{ b.text }}</h2> }
-            @case ('list') {
-              <ul>
-                @for (item of b.items; track $index) { <li>{{ item }}</li> }
-              </ul>
-            }
-            @default { <p>{{ b.text }}</p> }
-          }
-        }
+        <div class="post-body" [innerHTML]="p.content | richText"></div>
 
         <div class="post-footer">
           <a routerLink="/blogs" class="btn btn-outline">&larr; Back to Blogs</a>

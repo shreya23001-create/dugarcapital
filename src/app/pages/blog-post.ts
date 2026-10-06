@@ -4,29 +4,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { map } from 'rxjs';
 import { BlogService } from '../blog.service';
-
-type Block = { type: 'heading' | 'paragraph' | 'list'; text: string; items: string[] };
-
-/**
- * Article text is plain text: blank line = new paragraph, "## " = heading, lines starting with "- " = bullet list.
- * Rendered with normal Angular bindings (never innerHTML), so it can't inject markup.
- */
-function toBlocks(content: string): Block[] {
-  return content
-    .split(/\n\s*\n/)
-    .map(chunk => chunk.trim())
-    .filter(Boolean)
-    .map((chunk): Block => {
-      const lines = chunk.split('\n').map(l => l.trim());
-      if (chunk.startsWith('## ')) return { type: 'heading', text: chunk.slice(3).trim(), items: [] };
-      if (lines.every(l => l.startsWith('- '))) return { type: 'list', text: '', items: lines.map(l => l.slice(2).trim()) };
-      return { type: 'paragraph', text: chunk, items: [] };
-    });
-}
+import { RichTextPipe } from '../rich-text';
 
 @Component({
   selector: 'app-blog-post',
-  imports: [RouterLink],
+  imports: [RouterLink, RichTextPipe],
   templateUrl: './blog-post.html',
   styleUrl: './blog-post.scss',
 })
@@ -38,7 +20,6 @@ export class BlogPostPage {
   protected readonly loaded = computed(() => this.service.posts() !== null);
   protected readonly post = computed(() => this.service.posts()?.find(b => b.slug === this.slug()));
   protected readonly hero = computed(() => (this.post() ? `url("${this.post()!.image}")` : ''));
-  protected readonly blocks = computed(() => toBlocks(this.post()?.content ?? ''));
 
   constructor() {
     this.service.load(true);

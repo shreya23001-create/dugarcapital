@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AdminService } from './admin.service';
+import { RichEditor } from './rich-editor';
 
 const DEFAULT_IMAGE = 'images/about/business-charts-review.jpg';
 
@@ -13,7 +14,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 @Component({
   selector: 'app-admin-blog-editor',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, RichEditor],
   template: `
     <a routerLink="/admin/blogs" class="back a-link">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
@@ -43,17 +44,20 @@ const today = () => new Date().toISOString().slice(0, 10);
                 @if (errors()['slug']) { <span class="a-error">{{ errors()['slug'] }}</span> }
               </label>
 
-              <label class="a-field">
-                <span>Short summary <small class="a-hint">({{ form.controls.excerpt.value.length }}/400, shown on the blogs page)</small></span>
-                <textarea class="a-textarea" rows="3" formControlName="excerpt" maxlength="400" [class.invalid]="errors()['excerpt']"></textarea>
+              <div class="a-field">
+                <span id="summary-label">Short summary <small class="a-hint">(shown on the blogs page and at the top of the post)</small></span>
+                <app-rich-editor formControlName="excerpt" variant="compact" ariaLabel="Short summary" [minHeight]="110" [maxChars]="400"
+                                 placeholder="A short introduction to the article…" [invalid]="!!errors()['excerpt']" />
                 @if (errors()['excerpt']) { <span class="a-error">{{ errors()['excerpt'] }}</span> }
-              </label>
+              </div>
 
-              <label class="a-field">Article
-                <textarea class="a-textarea" rows="16" formControlName="content" placeholder="Write the article here…" [class.invalid]="errors()['content']"></textarea>
-                <span class="a-hint">Leave a blank line between paragraphs. Start a line with <code>## </code> for a heading and <code>- </code> for bullet points.</span>
+              <div class="a-field">
+                <span id="article-label">Article</span>
+                <app-rich-editor formControlName="content" ariaLabel="Article" [minHeight]="380"
+                                 placeholder="Write the article here…" [invalid]="!!errors()['content']" />
+                <span class="a-hint">Use the toolbar for bold, bullet points, headings and links. To start a bulleted list quickly, type <code>- </code> at the start of a line.</span>
                 @if (errors()['content']) { <span class="a-error">{{ errors()['content'] }}</span> }
-              </label>
+              </div>
             </div>
           </section>
         </div>
